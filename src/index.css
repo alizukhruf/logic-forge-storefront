@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #101828;
+  background: #f7f8fa;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --navy-950: #081b36;
+  --navy-900: #102c50;
+  --navy-800: #163b68;
+  --navy-700: #205184;
+  --ink: #101828;
+  --muted: #667085;
+  --line: #e5e9ef;
+  --surface: #ffffff;
+  --canvas: #f7f8fa;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply antialiased;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #78a4d1;
+  outline-offset: 2px;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Manrope', 'DM Sans', sans-serif;
+}
+
+::selection {
+  background: #d7e7f7;
+  color: var(--navy-950);
+}
+
+@layer components {
+  .lf-page {
+    @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12;
+  }
+
+  .lf-section-heading {
+    @apply mb-6 flex items-end justify-between gap-4;
+  }
+
+  .lf-eyebrow {
+    @apply mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-brand-600;
+  }
+
+  .lf-panel {
+    @apply rounded-2xl border border-gray-100 bg-white shadow-sm;
+  }
+
+  .lf-button-primary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-900 px-5 py-3 text-sm font-semibold text-white transition;
+  }
+
+  .lf-button-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition;
+  }
+
+  .lf-input {
+    @apply min-h-11 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400;
+  }
+
+  .lf-button-primary:hover:not(:disabled) {
+    background-color: #163b68;
+  }
+
+  .lf-button-secondary:hover:not(:disabled) {
+    border-color: #205184;
+    color: #163b68;
+  }
+
+  .lf-button-primary:disabled,
+  .lf-button-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .lf-input:focus {
+    border-color: #2b6395;
+    outline: none;
+  }
+
+  .admin-page-heading {
+    @apply mb-6 flex flex-wrap items-end justify-between gap-3;
+  }
+
+  .admin-page-title {
+    @apply font-display text-2xl font-extrabold tracking-tight;
+    color: var(--navy-950);
+  }
+
+  @media (min-width: 640px) {
+    .admin-page-title {
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+    }
+  }
+
+  .admin-page-description {
+    @apply mt-1 text-sm text-gray-500;
+  }
+
+  .admin-table {
+    @apply min-w-full border-collapse text-left text-sm;
+  }
+
+  .admin-table thead {
+    @apply bg-gray-50;
+  }
+
+  .admin-table th {
+    @apply whitespace-nowrap border-b border-gray-100 px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-500;
+  }
+
+  .admin-table td {
+    @apply border-b border-gray-50 px-4 py-3 align-middle text-gray-700 last:border-0;
+  }
+
+  .admin-table tbody tr {
+    @apply transition-colors;
+  }
+
+  .admin-table tbody tr:hover {
+    background-color: rgb(249 250 251 / 70%);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-300;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
