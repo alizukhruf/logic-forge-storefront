@@ -59,6 +59,12 @@ npm run dev
 
 Use `npm run build` to type-check and create the production bundle. `npm run preview` serves that bundle locally.
 
+## Vercel deployment
+
+Deploy the repository root with the **Vite** framework preset, `npm run build` as the build command, and `dist` as the output directory. These are Vite's standard settings; the root [`vercel.json`](./vercel.json) also rewrites client-side routes to `index.html` while leaving `/api`, `/assets`, and file requests untouched. This allows routes such as `/order-confirmation/:orderId` to load on direct visits and refreshes.
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel's project environment variables for Production (and Preview if needed), then redeploy. Use only the publishable key in this browser app; never set a Supabase service-role key as a `VITE_` variable.
+
 ## Security notes
 
 - Supabase Auth handles password storage and sessions; passwords are never stored in the application tables.
