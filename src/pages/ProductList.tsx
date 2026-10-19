@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDatabase } from '../context/DatabaseContext';
 import { listCategories, listProducts } from '../db/repo';
+import type { Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
+import { ProductDetailsModal } from '../components/ProductDetailsModal';
 import { Loader } from '../components/Loader';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const ProductList: React.FC = () => {
   const { db, ready } = useDatabase();
@@ -33,6 +36,14 @@ export const ProductList: React.FC = () => {
     if (value) next.set(key, value);
     else next.delete(key);
     setParams(next);
+  };
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setModalOpen(true);
   };
 
   return (
@@ -89,11 +100,36 @@ export const ProductList: React.FC = () => {
           <button onClick={() => setParams({})} className="lf-button-secondary mt-5">Clear filters</button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4"
+        >
+          <AnimatePresence>
+            {products.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: products.indexOf(p) * 0.05 }}
+              >
+                <ProductCard product={p} onProductClick={handleProductClick} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {selectedProduct && modalOpen && (
+        <ProductDetailsModal
+          product={selectedProduct}
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedProduct(null);
+          }}
+        />
       )}
     </div>
   );

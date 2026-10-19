@@ -13,7 +13,21 @@ export const Checkout: React.FC = () => {
   const { db, refresh } = useDatabase();
   const navigate = useNavigate();
 
-  const [address, setAddress] = useState<Address>({ line1: '', city: '', state: '', zip: '', country: 'United States' });
+  const [address, setAddress] = useState<Address>(() => {
+    const nameParts = (user?.name ?? '').trim().split(/\s+/);
+    const firstName = nameParts.shift() ?? '';
+    return {
+      first_name: firstName,
+      last_name: nameParts.join(' '),
+      phone: user?.phone ?? '',
+      line1: '',
+      line2: '',
+      city: '',
+      state: '',
+      zip: '',
+      country: 'Pakistan',
+    };
+  });
   const [couponCode, setCouponCode] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
   const [discountPreview, setDiscountPreview] = useState(0);
@@ -95,12 +109,37 @@ export const Checkout: React.FC = () => {
         <form onSubmit={handlePlaceOrder} className="lf-panel space-y-4 p-5 sm:p-7">
           <div className="mb-5">
             <h2 className="font-display text-xl font-bold text-brand-950">Shipping address</h2>
-            <p className="mt-1 text-sm text-gray-500">Where should we send your order?</p>
+            <p className="mt-1 text-sm text-gray-500">Enter the recipient and address for delivery in Pakistan.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="address-first-name" className="mb-1.5 block text-sm font-semibold text-gray-700">First name</label>
+              <input id="address-first-name" autoComplete="given-name" required maxLength={80} value={address.first_name}
+                onChange={(event) => setAddress({ ...address, first_name: event.target.value })} className="lf-input" />
+            </div>
+            <div>
+              <label htmlFor="address-last-name" className="mb-1.5 block text-sm font-semibold text-gray-700">Last name</label>
+              <input id="address-last-name" autoComplete="family-name" required maxLength={80} value={address.last_name}
+                onChange={(event) => setAddress({ ...address, last_name: event.target.value })} className="lf-input" />
+            </div>
           </div>
           <div>
-            <label htmlFor="address-line1" className="mb-1.5 block text-sm font-semibold text-gray-700">Street address</label>
+            <label htmlFor="address-phone" className="mb-1.5 block text-sm font-semibold text-gray-700">Delivery mobile number</label>
+            <input id="address-phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={24}
+              pattern="(?:[+]92|0092|0)?[ -]?3(?:[ -]?[0-9]){9}"
+              title="Enter a Pakistani mobile number, such as 03001234567 or +92 300 1234567."
+              placeholder="03XX XXXXXXX" value={address.phone}
+              onChange={(event) => setAddress({ ...address, phone: event.target.value })} className="lf-input" />
+          </div>
+          <div>
+            <label htmlFor="address-line1" className="mb-1.5 block text-sm font-semibold text-gray-700">House / flat number and street</label>
             <input id="address-line1" autoComplete="address-line1" required maxLength={200} value={address.line1}
               onChange={(event) => setAddress({ ...address, line1: event.target.value })} className="lf-input" />
+          </div>
+          <div>
+            <label htmlFor="address-line2" className="mb-1.5 block text-sm font-semibold text-gray-700">Area, sector, or landmark <span className="font-normal text-gray-400">(optional)</span></label>
+            <input id="address-line2" autoComplete="address-line2" maxLength={200} value={address.line2}
+              onChange={(event) => setAddress({ ...address, line2: event.target.value })} className="lf-input" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -109,21 +148,29 @@ export const Checkout: React.FC = () => {
                 onChange={(event) => setAddress({ ...address, city: event.target.value })} className="lf-input" />
             </div>
             <div>
-              <label htmlFor="address-state" className="mb-1.5 block text-sm font-semibold text-gray-700">State / region</label>
-              <input id="address-state" autoComplete="address-level1" required maxLength={100} value={address.state}
-                onChange={(event) => setAddress({ ...address, state: event.target.value })} className="lf-input" />
+              <label htmlFor="address-state" className="mb-1.5 block text-sm font-semibold text-gray-700">Province / territory</label>
+              <select id="address-state" autoComplete="address-level1" required value={address.state}
+                onChange={(event) => setAddress({ ...address, state: event.target.value })} className="lf-input">
+                <option value="">Select province / territory</option>
+                <option>Punjab</option>
+                <option>Sindh</option>
+                <option>Khyber Pakhtunkhwa</option>
+                <option>Balochistan</option>
+                <option>Islamabad Capital Territory</option>
+                <option>Gilgit-Baltistan</option>
+                <option>Azad Jammu and Kashmir</option>
+              </select>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="address-zip" className="mb-1.5 block text-sm font-semibold text-gray-700">ZIP / postal code</label>
-              <input id="address-zip" autoComplete="postal-code" required maxLength={24} value={address.zip}
+              <label htmlFor="address-zip" className="mb-1.5 block text-sm font-semibold text-gray-700">Postal code <span className="font-normal text-gray-400">(optional)</span></label>
+              <input id="address-zip" autoComplete="postal-code" maxLength={24} value={address.zip}
                 onChange={(event) => setAddress({ ...address, zip: event.target.value })} className="lf-input" />
             </div>
             <div>
               <label htmlFor="address-country" className="mb-1.5 block text-sm font-semibold text-gray-700">Country</label>
-              <input id="address-country" autoComplete="country-name" required maxLength={100} value={address.country}
-                onChange={(event) => setAddress({ ...address, country: event.target.value })} className="lf-input" />
+              <input id="address-country" autoComplete="country-name" readOnly value={address.country} className="lf-input bg-gray-50" />
             </div>
           </div>
 

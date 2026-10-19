@@ -63,14 +63,11 @@ export const Navbar: React.FC = () => {
         </form>
 
         <nav aria-label="Main navigation" className="ml-auto flex items-center gap-1 text-sm sm:gap-3">
-          <Link to="/shop" className="hidden rounded-lg px-2 py-2 font-semibold text-gray-700 hover:bg-gray-50 hover:text-brand-800 sm:inline">
+          <Link to="/shop" className="hidden rounded-lg px-2 py-2 font-semibold text-gray-700 hover:bg-gray-50 hover:text-brand-800 transition-colors duration-200 sm:inline">
             Shop
           </Link>
-          <Link to="/shop#categories" className="hidden rounded-lg px-2 py-2 font-semibold text-gray-700 hover:bg-gray-50 hover:text-brand-800 lg:inline">
-            Categories
-          </Link>
           {user && (
-            <Link to="/wishlist" aria-label="Wishlist" className="hidden p-2 text-gray-700 hover:text-brand-800 sm:inline-flex">
+            <Link to="/wishlist" aria-label="Wishlist" className="hidden p-2 text-gray-700 hover:text-brand-800 transition-colors duration-200 sm:inline-flex">
               <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
               </svg>
@@ -79,7 +76,7 @@ export const Navbar: React.FC = () => {
           <button
             onClick={() => setMobileSearchOpen((open) => !open)}
             aria-label={mobileSearchOpen ? 'Close search' : 'Open search'}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-50 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-50 md:hidden transition-colors duration-200"
           >
             <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" />
@@ -88,7 +85,7 @@ export const Navbar: React.FC = () => {
           <Link
             to="/cart"
             aria-label={`Shopping bag${itemCount ? `, ${itemCount} items` : ''}`}
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-50 hover:text-brand-800"
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-50 hover:text-brand-800 transition-colors duration-200"
           >
             <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M5 8h14l1 13H4L5 8Z" /><path d="M9 9V6a3 3 0 0 1 6 0v3" />
@@ -106,7 +103,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMenuOpen((open) => !open)}
               aria-label="Account menu"
               aria-expanded={menuOpen}
-              className="flex h-10 items-center gap-2 rounded-full border border-gray-200 px-2.5 text-sm font-semibold text-brand-950 transition hover:bg-gray-50"
+              className="flex h-10 items-center gap-2 rounded-full border border-gray-200 px-2.5 text-sm font-semibold text-brand-950 transition-all duration-200 hover:bg-gray-50"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
                 {user ? user.name.charAt(0).toUpperCase() : (
@@ -120,9 +117,10 @@ export const Navbar: React.FC = () => {
             <AnimatePresence>
               {menuOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                   className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-gray-100 bg-white py-2 shadow-xl"
                 >
                   {user ? (
@@ -131,14 +129,57 @@ export const Navbar: React.FC = () => {
                         <p className="truncate text-xs text-gray-500">Signed in as</p>
                         <p className="truncate text-sm font-semibold text-gray-900">{user.email}</p>
                       </div>
-                      <Link to="/account" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm hover:bg-gray-50">My account</Link>
-                      {isAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm hover:bg-gray-50">Admin dashboard</Link>}
-                      <button onClick={() => { void signOut(); }} className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50">Sign out</button>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05, duration: 0.2 }}
+                      >
+                        <Link to="/account" className="block px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                          My account
+                        </Link>
+                      </motion.div>
+                      {isAdmin && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1, duration: 0.2 }}
+                        >
+                          <Link to="/admin" className="block px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                            Admin dashboard
+                          </Link>
+                        </motion.div>
+                      )}
+                      <motion.button
+                        type="button"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15, duration: 0.2 }}
+                        className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                        onClick={() => { void signOut(); }}
+                      >
+                        Sign out
+                      </motion.button>
                     </>
                   ) : (
                     <>
-                      <Link to="/login" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm hover:bg-gray-50">Sign in</Link>
-                      <Link to="/register" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm hover:bg-gray-50">Create account</Link>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05, duration: 0.2 }}
+                      >
+                        <Link to="/login" className="block px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                          Sign in
+                        </Link>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.2 }}
+                      >
+                        <Link to="/register" className="block px-4 py-2.5 text-sm hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                          Create account
+                        </Link>
+                      </motion.div>
                     </>
                   )}
                 </motion.div>
@@ -161,10 +202,9 @@ export const Navbar: React.FC = () => {
         )}
       </AnimatePresence>
       <div className="flex justify-center gap-6 border-t border-gray-100 py-2 text-xs font-semibold text-gray-600 sm:hidden">
-        <Link to="/shop" className="hover:text-brand-800">Shop</Link>
-        <Link to="/shop#categories" className="hover:text-brand-800">Categories</Link>
-        {user && <Link to="/wishlist" className="hover:text-brand-800">Wishlist</Link>}
-        <Link to={user ? '/account' : '/login'} className="hover:text-brand-800">{user ? 'Account' : 'Sign in'}</Link>
+        <Link to="/shop" className="hover:text-brand-800 transition-colors duration-200">Shop</Link>
+        {user && <Link to="/wishlist" className="hover:text-brand-800 transition-colors duration-200">Wishlist</Link>}
+        <Link to={user ? '/account' : '/login'} className="hover:text-brand-800 transition-colors duration-200">{user ? 'Account' : 'Sign in'}</Link>
       </div>
     </header>
   );

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import type { Customer, StoreData } from '../types';
+import { defaultStoreSettings, type Customer, type StoreData } from '../types';
 import { useAuth } from './AuthContext';
 import { supabase, supabaseConfigError } from '../db/supabase';
 
@@ -12,6 +12,7 @@ interface StoreContextValue {
 }
 
 const emptyStore: StoreData = {
+  settings: defaultStoreSettings,
   categories: [],
   products: [],
   customers: [],
@@ -55,7 +56,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const load = useCallback(async (requestId: number) => {
     if (supabaseConfigError) throw new Error(supabaseConfigError);
-    const [categories, products, customers, orders, orderItems, coupons, reviews, wishlist] = await Promise.all([
+    const [categories, products, customers, orders, orderItems, coupons, reviews, wishlist, settings] = await Promise.all([
       supabase.from('categories').select('*').order('name'),
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       loadProfiles(),
@@ -64,8 +65,9 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       supabase.from('coupons').select('*').order('code'),
       supabase.from('reviews').select('*').order('created_at', { ascending: false }),
       supabase.from('wishlist').select('*').order('created_at', { ascending: false }),
+      supabase.from('store_settings').select('*').eq('id', 1).maybeSingle(),
     ]);
-    const failed = [categories, products, orders, orderItems, coupons, reviews, wishlist].find((result) => result.error);
+    const failed = [categories, products, orders, orderItems, coupons, reviews, wishlist, settings].find((result) => result.error);
     if (failed?.error) {
       if ('code' in failed.error && failed.error.code === 'PGRST205') {
         throw new Error('Supabase tables are not set up. Run supabase/schema.sql in your Supabase SQL Editor.');
@@ -75,6 +77,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     if (requestId !== requestVersion.current) return;
     setDb({
+      settings: settings.data ?? defaultStoreSettings,
       categories: categories.data ?? [],
       products: products.data ?? [],
       customers,

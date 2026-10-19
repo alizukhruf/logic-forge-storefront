@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Navbar } from './components/Navbar';
@@ -27,16 +27,22 @@ import { AdminOrders } from './pages/admin/Orders';
 import { AdminCustomers } from './pages/admin/Customers';
 import { AdminCoupons } from './pages/admin/Coupons';
 import { AdminReviews } from './pages/admin/Reviews';
+import { AdminStoreSettings } from './pages/admin/StoreSettings';
 
-const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-    {children}
-  </motion.div>
-);
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+};
 
 const App: React.FC = () => {
   const { ready, error } = useDatabase();
   const location = useLocation();
+  const isAdminArea = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
 
   return (
     <AnimatePresence mode="wait">
@@ -70,42 +76,61 @@ const App: React.FC = () => {
       ) : (
         <motion.div
           key="store"
-          className="flex min-h-screen flex-col"
+          className={`flex min-h-screen flex-col ${isAdminArea ? 'bg-slate-50' : 'bg-white'}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          <Navbar />
-          <main className="flex-1">
+          {!isAdminArea && <Navbar />}
+          <main className={`flex-1 ${isAdminArea ? 'bg-slate-50' : 'bg-white'}`}>
             <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-                <Route path="/shop" element={<PageTransition><ProductList /></PageTransition>} />
-                <Route path="/product/:slug" element={<PageTransition><ProductDetail /></PageTransition>} />
-                <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
-                <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
-                <Route path="/order-confirmation/:orderId" element={<PageTransition><OrderConfirmation /></PageTransition>} />
-                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-                <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
-                <Route path="/account" element={<RequireAuth><PageTransition><Account /></PageTransition></RequireAuth>} />
-                <Route path="/wishlist" element={<RequireAuth><PageTransition><Wishlist /></PageTransition></RequireAuth>} />
+              <motion.div
+                key={location.pathname}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <Routes location={location}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/shop" element={<ProductList />} />
+                  <Route path="/product/:slug" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
+                  <Route path="/wishlist" element={<RequireAuth><Wishlist /></RequireAuth>} />
 
-                <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="products" element={<AdminProducts />} />
-                  <Route path="categories" element={<AdminCategories />} />
-                  <Route path="inventory" element={<AdminInventory />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="customers" element={<AdminCustomers />} />
-                  <Route path="coupons" element={<AdminCoupons />} />
-                  <Route path="reviews" element={<AdminReviews />} />
-                </Route>
+                  <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="products" element={<AdminProducts />} />
+                    <Route path="categories" element={<AdminCategories />} />
+                    <Route path="inventory" element={<AdminInventory />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                    <Route path="customers" element={<AdminCustomers />} />
+                    <Route path="coupons" element={<AdminCoupons />} />
+                    <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="store-settings" element={<AdminStoreSettings />} />
+                  </Route>
 
-                <Route path="*" element={<PageTransition><div className="lf-page"><div className="lf-panel mx-auto max-w-lg px-6 py-12 text-center"><span className="lf-eyebrow">404 error</span><h1 className="font-display text-2xl font-bold text-brand-950">Page not found</h1><p className="mt-2 text-sm text-gray-500">This page doesn’t exist or may have moved.</p><a href="/" className="lf-button-primary mt-5">Back to home</a></div></div></PageTransition>} />
-              </Routes>
+                  <Route path="*" element={
+                    <div className="lf-page">
+                      <div className="lf-panel mx-auto max-w-lg px-6 py-12 text-center">
+                        <span className="lf-eyebrow">404 error</span>
+                        <h1 className="font-display text-2xl font-bold text-brand-950">Page not found</h1>
+                        <p className="mt-2 text-sm text-gray-500">This page doesn't exist or may have moved.</p>
+                        <a href="/" className="lf-button-primary mt-5">Back to home</a>
+                      </div>
+                    </div>
+                  } />
+                </Routes>
+              </motion.div>
             </AnimatePresence>
           </main>
-          <Footer />
+          {!isAdminArea && <Footer />}
         </motion.div>
       )}
     </AnimatePresence>

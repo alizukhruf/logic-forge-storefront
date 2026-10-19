@@ -59,8 +59,11 @@ export const OrderConfirmation: React.FC = () => {
       <section aria-labelledby="shipping-heading" className="lf-panel mt-4 p-5 sm:p-6">
         <h2 id="shipping-heading" className="font-display font-bold text-brand-950">Shipping to</h2>
         <address className="mt-2 text-sm not-italic leading-6 text-gray-600">
-          {order.customer_name}<br />{order.shipping_address.line1}<br />
-          {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip}<br />
+          {[order.shipping_address.first_name, order.shipping_address.last_name].filter(Boolean).join(' ') || order.customer_name}<br />
+          {order.shipping_address.phone && <>{order.shipping_address.phone}<br /></>}
+          {order.shipping_address.line1}<br />
+          {order.shipping_address.line2 && <>{order.shipping_address.line2}<br /></>}
+          {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip && `${order.shipping_address.zip}, `}<br />
           {order.shipping_address.country}
         </address>
       </section>

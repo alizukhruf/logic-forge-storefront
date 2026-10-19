@@ -151,6 +151,119 @@ h1, h2, h3, h4, .font-display {
     background-color: rgb(249 250 251 / 70%);
   }
 
+  .admin-shell {
+    color: #1e293b;
+    background: #f8fafc;
+  }
+
+  .admin-shell .lf-panel {
+    @apply rounded-xl border-slate-200 shadow-sm;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  }
+
+  .admin-shell .admin-page-heading {
+    @apply mb-6;
+  }
+
+  .admin-shell .lf-eyebrow {
+    @apply mb-1 text-[10px] tracking-[0.15em] text-slate-500;
+  }
+
+  .admin-shell .admin-page-title {
+    @apply text-2xl font-bold tracking-tight text-slate-900;
+  }
+
+  .admin-shell .admin-page-description {
+    @apply mt-1 text-sm text-slate-500;
+  }
+
+  .admin-shell .lf-button-primary,
+  .admin-shell .lf-button-secondary,
+  .admin-shell .lf-input {
+    @apply rounded-lg;
+  }
+
+  .admin-shell .lf-button-primary {
+    @apply bg-brand-900 px-4 py-2.5 text-sm;
+  }
+
+  .admin-shell .lf-button-primary:hover:not(:disabled) {
+    background-color: #1e293b;
+  }
+
+  .admin-shell .lf-button-secondary {
+    @apply border-slate-200 text-slate-700;
+  }
+
+  .admin-shell .lf-input {
+    @apply border-slate-200 bg-white;
+  }
+
+  .admin-shell .lf-input:focus {
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px rgb(100 116 139 / 12%);
+  }
+
+  .admin-shell .admin-table thead {
+    @apply bg-slate-50;
+  }
+
+  .admin-shell .admin-table th {
+    @apply border-slate-200 px-4 py-3 text-[10px] tracking-[0.1em] text-slate-500;
+  }
+
+  .admin-shell .admin-table td {
+    @apply border-slate-100 px-4 py-3.5 text-slate-600;
+  }
+
+  .admin-shell .admin-table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .admin-status-pill {
+    @apply inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize;
+  }
+
+  .admin-status-pending {
+    @apply bg-amber-50 text-amber-700;
+  }
+
+  .admin-status-processing {
+    @apply bg-blue-50 text-blue-700;
+  }
+
+  .admin-status-shipped {
+    @apply bg-violet-50 text-violet-700;
+  }
+
+  .admin-status-delivered {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .admin-status-cancelled {
+    @apply bg-slate-100 text-slate-600;
+  }
+
+  .admin-status-bar-pending {
+    @apply bg-amber-400;
+  }
+
+  .admin-status-bar-processing {
+    @apply bg-blue-500;
+  }
+
+  .admin-status-bar-shipped {
+    @apply bg-violet-500;
+  }
+
+  .admin-status-bar-delivered {
+    @apply bg-emerald-500;
+  }
+
+  .admin-status-bar-cancelled {
+    @apply bg-slate-400;
+  }
+
   .lf-loader-screen {
     @apply flex min-h-screen flex-col items-center justify-center px-6 text-center;
     background:
@@ -210,6 +323,12 @@ h1, h2, h3, h4, .font-display {
 
   .lf-loader-label {
     @apply mt-3 text-sm font-medium tracking-wide text-gray-500;
+  }
+}
+
+@media (max-width: 1023px) {
+  .admin-sidebar-nav > div {
+    align-items: center;
   }
 }
 

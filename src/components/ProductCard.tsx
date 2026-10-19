@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { Product } from '../types';
 import { StarRating } from './StarRating';
@@ -11,7 +10,12 @@ import { useState } from 'react';
 import ProductImage from './ProductImage';
 import { formatPrice } from '../utils/currency';
 
-export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+interface ProductCardProps {
+  product: Product;
+  onProductClick?: (product: Product) => void;
+}
+
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { db, refresh } = useDatabase();
@@ -19,8 +23,16 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const [added, setAdded] = useState(false);
   const wished = db && user ? isWishlisted(db, user.id, product.id) : false;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (onProductClick) {
+      e.stopPropagation();
+      onProductClick(product);
+    }
+  };
+
   const handleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!db || !user) return;
     setWishlistError('');
     try {
@@ -31,7 +43,8 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     addToCart(product, 1);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
@@ -40,13 +53,16 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   return (
     <motion.div
       whileHover={{ y: -4 }}
+      onClick={handleCardClick}
+      style={{ cursor: onProductClick ? 'pointer' : 'default' }}
       className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:border-gray-200 hover:shadow-lg"
     >
-      <Link to={`/product/${product.slug}`}>
-        <div className="relative aspect-[4/3] overflow-hidden bg-gray-50 sm:aspect-square">
-          <ProductImage product={product} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-        </div>
-      </Link>
+      <div
+        onClick={handleCardClick}
+        className="relative aspect-[4/3] overflow-hidden bg-gray-50 sm:aspect-square"
+      >
+        <ProductImage product={product} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+      </div>
 
       {user && (
         <button
@@ -68,9 +84,9 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       )}
 
       <div className="p-3.5 sm:p-4">
-        <Link to={`/product/${product.slug}`}>
-          <h3 className="line-clamp-2 min-h-10 font-semibold leading-5 text-gray-900 hover:text-brand-700">{product.name}</h3>
-        </Link>
+        <h3 onClick={handleCardClick} className="line-clamp-2 min-h-10 font-semibold leading-5 text-gray-900 hover:text-brand-700 transition-colors duration-200">
+          {product.name}
+        </h3>
         <div className="mt-1">
           {product.review_count > 0 ? <StarRating rating={product.rating} count={product.review_count} /> : <span className="text-xs text-gray-400">No reviews yet</span>}
         </div>

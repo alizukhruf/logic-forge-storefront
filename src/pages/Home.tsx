@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useDatabase } from '../context/DatabaseContext';
 import { getDashboardStats, listCategories, listProducts } from '../db/repo';
+import type { Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
+import { ProductDetailsModal } from '../components/ProductDetailsModal';
 import { Loader } from '../components/Loader';
-import { formatPrice } from '../utils/currency';
 
 const categoryImages: Record<string, string> = {
   audio: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
@@ -27,23 +28,35 @@ export const Home: React.FC = () => {
     .map((item) => activeProducts.find((product) => product.name === item.name))
     .filter((product) => product !== undefined)
     .slice(0, 4);
-  const offer = db.coupons.filter((coupon) => coupon.active && (!coupon.expires_at || new Date(coupon.expires_at) > new Date()))
-    .sort((a, b) => (a.type === b.type ? b.value - a.value : a.type === 'percent' ? -1 : 1))[0];
+  const settings = db.settings;
+  const offer = db.coupons.find((coupon) =>
+    coupon.code === settings.offer_coupon_code &&
+    coupon.active &&
+    (!coupon.expires_at || new Date(coupon.expires_at) > new Date())
+  );
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setModalOpen(true);
+  };
 
   return (
     <div>
       <section className="overflow-hidden bg-[#eef3f8]">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            <span className="lf-eyebrow">Thoughtfully selected technology</span>
-            <h1 className="max-w-xl font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-brand-950 sm:text-5xl lg:text-6xl">
-              Make room for <span className="text-brand-600">better tech.</span>
+            <span className="lf-eyebrow">{settings.hero_eyebrow}</span>
+            <h1 className="max-w-xl whitespace-pre-line font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-brand-950 sm:text-5xl lg:text-6xl">
+              {settings.hero_title}
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-gray-600 sm:text-lg">
-              Useful everyday essentials, from personal audio to connected home and wearable technology.
+            <p className="mt-5 max-w-lg whitespace-pre-line text-base leading-7 text-gray-600 sm:text-lg">
+              {settings.hero_description}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/shop" className="lf-button-primary px-6">Shop the collection <span aria-hidden="true" className="ml-2">→</span></Link>
+              <Link to="/shop" className="lf-button-primary px-6">{settings.hero_cta_text} <span aria-hidden="true" className="ml-2">→</span></Link>
               <a href="#categories" className="lf-button-secondary px-6">Explore categories</a>
             </div>
             <p className="mt-6 text-xs font-medium text-gray-500">Explore products, check live availability, and manage orders in your account.</p>
@@ -51,7 +64,7 @@ export const Home: React.FC = () => {
           <div className="relative min-h-64 sm:min-h-80">
             <div className="absolute -right-10 top-0 h-56 w-56 rounded-full bg-brand-100 sm:h-72 sm:w-72" />
             <img
-              src="https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=1400&q=85"
+              src={settings.hero_image_url}
               alt="A curated selection of modern electronic devices"
               className="relative z-10 h-64 w-full rounded-3xl object-cover shadow-xl sm:h-80 lg:h-[390px]"
             />
@@ -64,27 +77,37 @@ export const Home: React.FC = () => {
       </section>
 
       <section id="categories" className="lf-page scroll-mt-36">
-        <div className="lf-section-heading">
-          <div><span className="lf-eyebrow">Browse by interest</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Find your category</h2></div>
-          <Link to="/shop" className="hidden text-sm font-semibold text-brand-700 hover:text-brand-900 sm:inline">Shop all products <span aria-hidden="true">→</span></Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {categories.map((category) => (
-            <Link key={category.id} to={`/shop?category=${category.id}`} className="group relative aspect-[1.12] overflow-hidden rounded-2xl bg-brand-100 sm:aspect-[1.15]">
-              <img
-                src={categoryImages[category.slug] || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=800&q=80'}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-950/85 via-brand-950/15 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
-                <h3 className="font-display text-base font-bold sm:text-xl">{category.name}</h3>
-                <p className="mt-1 line-clamp-1 text-xs text-white/75">{category.description}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+          <div className="lf-section-heading">
+            <div><span className="lf-eyebrow">Browse by interest</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Find your category</h2></div>
+            <Link to="/shop" className="hidden text-sm font-semibold text-brand-700 hover:text-brand-900 sm:inline">Shop all products <span aria-hidden="true">→</span></Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {categories.map((category) => (
+              <motion.div
+                key={category.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: categories.indexOf(category) * 0.05 }}
+                whileHover={{ y: -4 }}
+              >
+                <Link to={`/shop?category=${category.id}`} className="group relative aspect-[1.12] overflow-hidden rounded-2xl bg-brand-100 sm:aspect-[1.15]">
+                  <img
+                    src={categoryImages[category.slug] || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=800&q=80'}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-950/85 via-brand-950/15 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
+                    <h3 className="font-display text-base font-bold sm:text-xl">{category.name}</h3>
+                    <p className="mt-1 line-clamp-1 text-xs text-white/75">{category.description}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </section>
 
       {offer && (
@@ -92,44 +115,96 @@ export const Home: React.FC = () => {
           <div className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-brand-950 px-6 py-7 text-white sm:flex-row sm:items-center sm:px-10 sm:py-9">
             <div>
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Available offer</span>
-              <h2 className="mt-2 font-display text-xl font-extrabold sm:text-2xl">
-                {offer.type === 'percent' ? `${offer.value}% off` : `${formatPrice(offer.value)} off`} with {offer.code}
-              </h2>
-              <p className="mt-1 text-sm text-blue-100">
-                {offer.min_subtotal > 0 ? `On orders over ${formatPrice(offer.min_subtotal)}. ` : ''}
-                {offer.expires_at ? `Available through ${new Date(offer.expires_at).toLocaleDateString()}.` : 'Enter the code at checkout.'}
-              </p>
+              <h2 className="mt-2 font-display text-xl font-extrabold sm:text-2xl">{settings.offer_title} <span className="whitespace-nowrap">{offer.code}</span></h2>
+              <p className="mt-1 whitespace-pre-line text-sm text-blue-100">{settings.offer_description}</p>
             </div>
-            <Link to="/shop" className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-brand-950 transition hover:bg-blue-50">Browse products <span aria-hidden="true" className="ml-2">→</span></Link>
+            <Link to="/shop" className="inline-flex min-h-11 items-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-brand-950 transition hover:bg-blue-50">{settings.offer_cta_text} <span aria-hidden="true" className="ml-2">→</span></Link>
           </div>
         </section>
       )}
 
       <section className="lf-page">
-        <div className="lf-section-heading">
-          <div><span className="lf-eyebrow">Picked from the collection</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Featured technology</h2></div>
-          <Link to="/shop" className="text-sm font-semibold text-brand-700 hover:text-brand-900">View all <span aria-hidden="true">→</span></Link>
-        </div>
-        {featured.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <p className="lf-panel p-6 text-sm text-gray-500">Products will appear here as they are added to the catalog.</p>}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
+          <div className="lf-section-heading">
+            <div><span className="lf-eyebrow">Picked from the collection</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Featured technology</h2></div>
+            <Link to="/shop" className="text-sm font-semibold text-brand-700 hover:text-brand-900">View all <span aria-hidden="true">→</span></Link>
+          </div>
+          {featured.length ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
+            >
+              {featured.map((product) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: featured.indexOf(product) * 0.05 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <ProductCard product={product} onProductClick={handleProductClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : <p className="lf-panel p-6 text-sm text-gray-500">Products will appear here as they are added to the catalog.</p>}
+        </motion.div>
       </section>
 
       <section className="border-y border-gray-100 bg-white">
-        <div className="lf-page !py-9 sm:!py-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }} className="lf-page !py-9 sm:!py-12">
           <div className="lf-section-heading">
             <div><span className="lf-eyebrow">Recently added</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">New arrivals</h2></div>
             <Link to="/shop?sort=newest" className="text-sm font-semibold text-brand-700 hover:text-brand-900">See what’s new <span aria-hidden="true">→</span></Link>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">{newArrivals.map((product) => <ProductCard key={product.id} product={product} />)}</div>
-        </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4"
+          >
+            {newArrivals.map((product) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: newArrivals.indexOf(product) * 0.05 }}
+                whileHover={{ y: -4 }}
+              >
+                <ProductCard product={product} onProductClick={handleProductClick} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
       </section>
 
       {topSellers.length > 0 && (
         <section className="lf-page">
-          <div className="lf-section-heading">
-            <div><span className="lf-eyebrow">Based on completed store orders</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Customer favorites</h2></div>
-            <Link to="/shop" className="text-sm font-semibold text-brand-700 hover:text-brand-900">Shop the collection <span aria-hidden="true">→</span></Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">{topSellers.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.4 }}>
+            <div className="lf-section-heading">
+              <div><span className="lf-eyebrow">Based on completed store orders</span><h2 className="font-display text-2xl font-extrabold text-brand-950 sm:text-3xl">Customer favorites</h2></div>
+              <Link to="/shop" className="text-sm font-semibold text-brand-700 hover:text-brand-900">Shop the collection <span aria-hidden="true">→</span></Link>
+            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4"
+            >
+              {topSellers.map((product) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: topSellers.indexOf(product) * 0.05 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <ProductCard product={product} onProductClick={handleProductClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
         </section>
       )}
 
@@ -148,6 +223,17 @@ export const Home: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {selectedProduct && modalOpen && (
+        <ProductDetailsModal
+          product={selectedProduct}
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 };
