@@ -9,6 +9,8 @@ import { StarRating } from '../components/StarRating';
 import { Loader } from '../components/Loader';
 import ProductImage from '../components/ProductImage';
 import { ProductCard } from '../components/ProductCard';
+import { ProductDetailsModal } from '../components/ProductDetailsModal';
+import type { Product } from '../types';
 import { formatPrice } from '../utils/currency';
 
 export const ProductDetail: React.FC = () => {
@@ -23,6 +25,8 @@ export const ProductDetail: React.FC = () => {
   const [added, setAdded] = useState(false);
   const [actionError, setActionError] = useState('');
   const [actionSuccess, setActionSuccess] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   if (!ready || !db) return <Loader />;
 
@@ -83,8 +87,13 @@ export const ProductDetail: React.FC = () => {
       await refresh();
       setActionSuccess(wished ? 'Removed from your wishlist.' : 'Saved to your wishlist.');
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not update your wishlist.');
+      setActionError(err instanceof Error ? err.message : 'Could not update wishlist.');
     }
+  };
+
+  const handleProductClick = (p: Product) => {
+    setSelectedProduct(p);
+    setModalOpen(true);
   };
 
   return (
@@ -93,6 +102,9 @@ export const ProductDetail: React.FC = () => {
         <nav aria-label="Breadcrumb" className="mb-5 text-xs font-medium text-gray-500">
           <Link to="/" className="hover:text-brand-700">Home</Link><span className="mx-2">/</span><Link to="/shop" className="hover:text-brand-700">Shop</Link><span className="mx-2">/</span><span className="text-gray-800">{product.name}</span>
         </nav>
+        <button onClick={() => window.history.back()} className="mb-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-950 transition-colors duration-200">
+          <span aria-hidden="true">←</span> Back
+        </button>
         <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative overflow-hidden rounded-3xl bg-white">
             <ProductImage product={product} className="aspect-square w-full object-cover" />
@@ -124,9 +136,6 @@ export const ProductDetail: React.FC = () => {
                 className="lf-input w-24 text-center" />
               <button onClick={() => add()} disabled={product.stock <= 0} className="lf-button-primary flex-1">
                 {added ? 'Added to bag ✓' : 'Add to bag'}
-              </button>
-              <button onClick={() => add(true)} disabled={product.stock <= 0} className="lf-button-secondary flex-1">
-                Buy now
               </button>
               {user && (
                 <button onClick={() => { void saveToWishlist(); }} aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'} className="lf-button-secondary min-w-12 px-3 text-xl text-brand-800">
@@ -180,17 +189,27 @@ export const ProductDetail: React.FC = () => {
             ))}</div>
           )}
         </section>
-      </div>
-      {relatedProducts.length > 0 && (
-        <section className="border-t border-gray-100 bg-white">
-          <div className="lf-page">
-            <div className="lf-section-heading">
-              <div><span className="lf-eyebrow">Keep exploring</span><h2 className="font-display text-2xl font-extrabold text-brand-950">More from this category</h2></div>
-              <Link to={`/shop?category=${product.category_id}`} className="text-sm font-semibold text-brand-700 hover:text-brand-900">View category →</Link>
+        {relatedProducts.length > 0 && (
+          <section className="border-t border-gray-100 bg-white">
+            <div className="lf-page">
+              <div className="lf-section-heading">
+                <div><span className="lf-eyebrow">Keep exploring</span><h2 className="font-display text-2xl font-extrabold text-brand-950">More from this category</h2></div>
+                <Link to={`/shop?category=${product.category_id}`} className="text-sm font-semibold text-brand-700 hover:text-brand-900">View category →</Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">{relatedProducts.map((related) => <ProductCard key={related.id} product={related} onProductClick={handleProductClick} />)}</div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">{relatedProducts.map((related) => <ProductCard key={related.id} product={related} />)}</div>
-          </div>
-        </section>
+          </section>
+        )}
+      </div>
+      {selectedProduct && modalOpen && (
+        <ProductDetailsModal
+          product={selectedProduct}
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedProduct(null);
+          }}
+        />
       )}
     </>
   );

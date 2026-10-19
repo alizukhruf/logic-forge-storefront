@@ -33,8 +33,10 @@ export const Cart: React.FC = () => {
           {lines.map((line) => (
             <motion.div
               key={line.product.id}
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, height: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20, height: 0 }}
+              transition={{ duration: 0.3 }}
               className="flex flex-wrap items-center gap-3 p-3 sm:flex-nowrap sm:gap-4 sm:p-5"
             >
               <ProductImage product={line.product} className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-24 sm:w-24" />

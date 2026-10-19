@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useDatabase } from '../context/DatabaseContext';
 import { listOrders } from '../db/repo';
@@ -52,18 +53,19 @@ export const Account: React.FC = () => {
 
   return (
     <div className="lf-page max-w-5xl">
-      <span className="lf-eyebrow">Your Logic Forge</span>
-      <h1 className="font-display text-3xl font-extrabold text-brand-950">My account</h1>
-      <section aria-label="Account details" className="lf-panel mt-6 flex flex-wrap items-center gap-4 p-5 sm:p-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <span className="lf-eyebrow">Your Logic Forge</span>
+        <h1 className="font-display text-3xl font-extrabold text-brand-950">My account</h1>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }} aria-label="Account details" className="lf-panel mt-6 flex flex-wrap items-center gap-4 p-5 sm:p-6">
         <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 font-display text-xl font-bold text-brand-800">{user.name.trim().charAt(0).toUpperCase()}</span>
         <div className="min-w-0">
           <h2 className="font-display text-lg font-bold text-brand-950">{user.name}</h2>
           <p className="break-all text-sm text-gray-500">{user.email}</p>
         </div>
         <Link to="/wishlist" className="lf-button-secondary ml-auto">View wishlist</Link>
-      </section>
-
-      <section aria-labelledby="password-heading" className="lf-panel mt-5 p-5 sm:p-6">
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }} aria-labelledby="password-heading" className="lf-panel mt-5 p-5 sm:p-6">
         <div className="mb-5">
           <span className="lf-eyebrow">Account security</span>
           <h2 id="password-heading" className="font-display text-xl font-bold text-brand-950">Change password</h2>
@@ -90,33 +92,48 @@ export const Account: React.FC = () => {
             </button>
           </div>
         </form>
-      </section>
+      </motion.div>
 
-      <div className="lf-section-heading mt-10">
-        <div><span className="lf-eyebrow">Purchases</span><h2 className="font-display text-2xl font-extrabold text-brand-950">Order history</h2></div>
-        <span className="text-sm text-gray-500">{orders.length} {orders.length === 1 ? 'order' : 'orders'}</span>
-      </div>
-      {orders.length === 0 ? (
-        <div className="lf-panel px-5 py-10 text-center">
-          <p className="text-sm text-gray-500">You haven’t placed an order yet.</p>
-          <Link to="/shop" className="lf-button-primary mt-4">Explore the collection</Link>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }} className="mt-10">
+        <div className="lf-section-heading">
+          <div><span className="lf-eyebrow">Purchases</span><h2 className="font-display text-2xl font-extrabold text-brand-950">Order history</h2></div>
+          <span className="text-sm text-gray-500">{orders.length} {orders.length === 1 ? 'order' : 'orders'}</span>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {orders.map((order) => (
-            <Link key={order.id} to={`/order-confirmation/${order.id}`}
-              className="lf-panel flex flex-wrap items-center justify-between gap-3 p-4 transition hover:border-brand-200 hover:shadow-md sm:p-5">
-              <div className="min-w-[45%]">
-                <p className="font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</p>
-                <time className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</time>
-              </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusColor[order.status] || 'bg-gray-100 text-gray-700'}`}>{order.status}</span>
-              <p className="font-display font-bold text-brand-950">{formatPrice(order.total)}</p>
-              <span aria-hidden="true" className="text-brand-600">→</span>
-            </Link>
-          ))}
-        </div>
-      )}
+        {orders.length === 0 ? (
+          <div className="lf-panel px-5 py-10 text-center">
+            <p className="text-sm text-gray-500">You haven’t placed an order yet.</p>
+            <Link to="/shop" className="lf-button-primary mt-4">Explore the collection</Link>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-3"
+          >
+            {orders.map((order) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: orders.indexOf(order) * 0.05 }}
+                whileHover={{ y: -2 }}
+              >
+                <Link to={`/order-confirmation/${order.id}`}
+                  className="lf-panel flex flex-wrap items-center justify-between gap-3 p-4 transition hover:border-brand-200 hover:shadow-md sm:p-5">
+                  <div className="min-w-[45%]">
+                    <p className="font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</p>
+                    <time className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</time>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusColor[order.status] || 'bg-gray-100 text-gray-700'}`}>{order.status}</span>
+                  <p className="font-display font-bold text-brand-950">{formatPrice(order.total)}</p>
+                  <span aria-hidden="true" className="text-brand-600">→</span>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 };
