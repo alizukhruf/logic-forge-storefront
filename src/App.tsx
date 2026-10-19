@@ -27,6 +27,7 @@ import { AdminOrders } from './pages/admin/Orders';
 import { AdminCustomers } from './pages/admin/Customers';
 import { AdminCoupons } from './pages/admin/Coupons';
 import { AdminReviews } from './pages/admin/Reviews';
+import { AdminStoreSettings } from './pages/admin/StoreSettings';
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -37,6 +38,7 @@ const pageVariants = {
 const App: React.FC = () => {
   const { ready, error } = useDatabase();
   const location = useLocation();
+  const isAdminArea = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -74,13 +76,13 @@ const App: React.FC = () => {
       ) : (
         <motion.div
           key="store"
-          className="flex min-h-screen flex-col bg-white"
+          className={`flex min-h-screen flex-col ${isAdminArea ? 'bg-slate-50' : 'bg-white'}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          <Navbar />
-          <main className="flex-1 bg-white">
+          {!isAdminArea && <Navbar />}
+          <main className={`flex-1 ${isAdminArea ? 'bg-slate-50' : 'bg-white'}`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -111,6 +113,7 @@ const App: React.FC = () => {
                     <Route path="customers" element={<AdminCustomers />} />
                     <Route path="coupons" element={<AdminCoupons />} />
                     <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="store-settings" element={<AdminStoreSettings />} />
                   </Route>
 
                   <Route path="*" element={
@@ -127,7 +130,7 @@ const App: React.FC = () => {
               </motion.div>
             </AnimatePresence>
           </main>
-          <Footer />
+          {!isAdminArea && <Footer />}
         </motion.div>
       )}
     </AnimatePresence>

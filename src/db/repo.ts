@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import type {
-  Category, Product, Customer, Order, OrderItem, Coupon, Review, WishlistItem, CartLine, Address, StoreData,
+  Category, Product, Customer, Order, OrderItem, Coupon, Review, WishlistItem, CartLine, Address, StoreData, StoreSettings,
 } from '../types';
 import { supabase } from './supabase';
 import { formatPrice } from '../utils/currency';
@@ -139,6 +139,16 @@ export const upsertCoupon = async (_db: StoreData, c: Partial<Coupon> & { code: 
 
 export const deleteCoupon = async (_db: StoreData, id: string) => {
   const { error } = await supabase.from('coupons').delete().eq('id', id);
+  fail(error);
+};
+
+export const saveStoreSettings = async (settings: StoreSettings): Promise<void> => {
+  const { error } = await supabase.from('store_settings').upsert(settings, { onConflict: 'id' });
+  fail(error);
+};
+
+export const resetSalesAndOrders = async (): Promise<void> => {
+  const { error } = await supabase.rpc('admin_reset_sales');
   fail(error);
 };
 

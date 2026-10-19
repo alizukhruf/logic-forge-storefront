@@ -28,9 +28,32 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text not null,
   email text not null unique,
+  phone text not null default '',
   role text not null default 'customer' check (role in ('customer', 'admin')),
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists phone text not null default '';
+
+create table if not exists public.store_settings (
+  id integer primary key default 1 check (id = 1),
+  hero_eyebrow text not null default 'Thoughtfully selected technology',
+  hero_title text not null default 'Make room for better tech.',
+  hero_description text not null default 'Useful everyday essentials, from personal audio to connected home and wearable technology.',
+  hero_image_url text not null default 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=1400&q=85',
+  hero_cta_text text not null default 'Shop the collection',
+  offer_title text not null default '10% off with',
+  offer_description text not null default 'Enter the code at checkout.',
+  offer_coupon_code text not null default 'WELCOME10',
+  offer_cta_text text not null default 'Browse products',
+  contact_email text not null default 'logicforge.admin@gmail.com',
+  contact_phone text not null default '03440418249',
+  contact_address text not null default ''
+);
+
+insert into public.store_settings (id)
+values (1)
+on conflict (id) do nothing;
 
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
@@ -138,12 +161,31 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, name, email)
+  insert into public.profiles (id, name, email, phone)
   values (
     new.id,
-    coalesce(nullif(new.raw_user_meta_data ->> 'name', ''), split_part(new.email, '@', 1)),
-    new.email
+    coalesce(
+      nullif(new.raw_user_meta_data ->> 'name', ''),
+      nullif(concat_ws(' ', new.raw_user_meta_data ->> 'first_name', new.raw_user_meta_data ->> 'last_name'), ''),
+      split_part(new.email, '@', 1)
+    ),
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'phone', '')
   );
+  return new;
+end;
+$$;
+
+create or replace function public.sync_profile_email_from_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.email is distinct from old.email then
+    update public.profiles set email = new.email where id = new.id;
+  end if;
   return new;
 end;
 $$;
@@ -152,6 +194,11 @@ drop trigger if exists on_auth_user_created_profile on auth.users;
 create trigger on_auth_user_created_profile
   after insert on auth.users
   for each row execute procedure public.create_profile_for_auth_user();
+
+drop trigger if exists on_auth_user_email_updated on auth.users;
+create trigger on_auth_user_email_updated
+  after update of email on auth.users
+  for each row execute procedure public.sync_profile_email_from_auth_user();
 
 create or replace function public.refresh_product_review_totals()
 returns trigger
@@ -232,10 +279,13 @@ begin
   end if;
   if exists (
     select 1
-    from (values ('line1'), ('city'), ('state'), ('zip'), ('country')) as required_field(key)
+    from (values ('first_name'), ('last_name'), ('phone'), ('line1'), ('city'), ('state'), ('country')) as required_field(key)
     where nullif(btrim(p_address ->> required_field.key), '') is null
   ) then
     raise exception 'Complete all shipping address fields before placing your order.';
+  end if;
+  if p_address ->> 'country' <> 'Pakistan' then
+    raise exception 'This store currently ships within Pakistan.';
   end if;
 
   select * into current_profile
@@ -294,7 +344,9 @@ begin
     id, customer_id, customer_name, customer_email, status, subtotal, discount,
     tax, total, coupon_code, shipping_address
   ) values (
-    order_id, current_user_id, current_profile.name, current_profile.email, 'pending',
+    order_id, current_user_id,
+    concat_ws(' ', nullif(btrim(p_address ->> 'first_name'), ''), nullif(btrim(p_address ->> 'last_name'), '')),
+    current_profile.email, 'pending',
     order_subtotal, order_discount, order_tax, order_total, coupon_value, p_address
   );
 
@@ -313,9 +365,40 @@ begin
 end;
 $$;
 
+create or replace function public.admin_reset_sales()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  sold_item record;
+begin
+  if (select auth.uid()) is null or not public.is_admin() then
+    raise exception 'Administrator access required.';
+  end if;
+
+  perform id from public.products order by id for update;
+
+  for sold_item in
+    select product_id, sum(quantity)::integer as quantity
+    from public.order_items
+    group by product_id
+    order by product_id
+  loop
+    update public.products
+    set stock = stock + sold_item.quantity
+    where id = sold_item.product_id;
+  end loop;
+
+  delete from public.orders where id is not null;
+end;
+$$;
+
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.profiles enable row level security;
+alter table public.store_settings enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.coupons enable row level security;
@@ -334,6 +417,16 @@ create policy "Admins manage products" on public.products for all to authenticat
 
 drop policy if exists "Users read own profile and admins read all" on public.profiles;
 create policy "Users read own profile and admins read all" on public.profiles for select to authenticated using (id = (select auth.uid()) or public.is_admin());
+drop policy if exists "Users update their own profile" on public.profiles;
+create policy "Users update their own profile"
+  on public.profiles for update to authenticated
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
+
+drop policy if exists "Store settings are publicly readable" on public.store_settings;
+create policy "Store settings are publicly readable" on public.store_settings for select to anon, authenticated using (true);
+drop policy if exists "Admins manage store settings" on public.store_settings;
+create policy "Admins manage store settings" on public.store_settings for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "Customers read their orders and admins read all" on public.orders;
 create policy "Customers read their orders and admins read all" on public.orders for select to authenticated using (customer_id = (select auth.uid()) or public.is_admin());
@@ -369,12 +462,18 @@ using (customer_id = (select auth.uid()))
 with check (customer_id = (select auth.uid()));
 
 grant select on public.categories, public.products, public.coupons, public.reviews to anon, authenticated;
-grant select on public.profiles, public.orders, public.order_items, public.wishlist to anon, authenticated;
+grant select on public.profiles, public.store_settings, public.orders, public.order_items, public.wishlist to anon, authenticated;
+revoke update on public.profiles from anon, authenticated;
+revoke update (id, name, email, phone, role, created_at) on public.profiles from anon, authenticated;
+grant update (name, phone) on public.profiles to authenticated;
 grant insert, update, delete on public.categories, public.products, public.coupons to authenticated;
+grant insert, update on public.store_settings to authenticated;
 grant insert, delete on public.reviews, public.wishlist to authenticated;
 grant update (status) on public.orders to authenticated;
 grant execute on function public.adjust_inventory(uuid, integer) to authenticated;
 grant execute on function public.place_order(jsonb, jsonb, text) to authenticated;
+revoke all on function public.admin_reset_sales() from public, anon;
+grant execute on function public.admin_reset_sales() to authenticated;
 
 insert into public.categories (id, name, slug, description) values
   ('10000000-0000-4000-8000-000000000001', 'Audio', 'audio', 'Headphones, speakers & more'),

@@ -6,7 +6,8 @@ interface AuthContextValue {
   user: Customer | null;
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (firstName: string, lastName: string, email: string, phone: string, password: string) => Promise<boolean>;
+  updateProfile: (name: string, phone: string, email: string) => Promise<boolean>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   isAdmin: boolean;
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextValue>({
   ready: false,
   login: async () => {},
   register: async () => false,
+  updateProfile: async () => false,
   changePassword: async () => {},
   logout: async () => {},
   isAdmin: false,
@@ -87,12 +89,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(await getProfile(data.user.id));
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (firstName: string, lastName: string, email: string, phone: string, password: string) => {
     if (supabaseConfigError) throw new Error(supabaseConfigError);
+    const name = `${firstName.trim()} ${lastName.trim()}`.trim();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name, first_name: firstName.trim(), last_name: lastName.trim(), phone: phone.trim() } },
     });
     if (error) throw error;
     if (data.session && data.user) {
@@ -100,6 +103,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     return false;
+  };
+
+  const updateProfile = async (name: string, phone: string, email: string): Promise<boolean> => {
+    if (supabaseConfigError) throw new Error(supabaseConfigError);
+    if (!user) throw new Error('Sign in before updating your profile.');
+
+    const normalizedName = name.trim().replace(/\s+/g, ' ');
+    const normalizedPhone = phone.trim();
+    const normalizedEmail = email.trim().toLocaleLowerCase();
+    if (!normalizedName) throw new Error('Enter your name.');
+    if (!normalizedPhone) throw new Error('Enter your mobile number.');
+    if (!normalizedEmail) throw new Error('Enter your email address.');
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ name: normalizedName, phone: normalizedPhone })
+      .eq('id', user.id);
+    if (profileError) throw profileError;
+
+    setUser({ ...user, name: normalizedName, phone: normalizedPhone });
+
+    if (normalizedEmail === user.email.toLocaleLowerCase()) return false;
+
+    const { error: emailError } = await supabase.auth.updateUser({ email: normalizedEmail });
+    if (emailError) throw emailError;
+    return true;
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
@@ -128,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, changePassword, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, ready, login, register, updateProfile, changePassword, logout, isAdmin: user?.role === 'admin' }}>
       {children}
     </AuthContext.Provider>
   );

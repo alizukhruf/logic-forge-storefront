@@ -78,7 +78,14 @@ export const AdminOrders: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="mb-2 font-semibold text-gray-800">Shipping address</h3>
-                    <address className="text-sm not-italic leading-6">{o.shipping_address.line1}<br />{o.shipping_address.city}, {o.shipping_address.state} {o.shipping_address.zip}<br />{o.shipping_address.country}</address>
+                    <address className="text-sm not-italic leading-6">
+                      {[o.shipping_address.first_name, o.shipping_address.last_name].filter(Boolean).join(' ') || o.customer_name}<br />
+                      {o.shipping_address.phone && <>{o.shipping_address.phone}<br /></>}
+                      {o.shipping_address.line1}<br />
+                      {o.shipping_address.line2 && <>{o.shipping_address.line2}<br /></>}
+                      {o.shipping_address.city}, {o.shipping_address.state} {o.shipping_address.zip}<br />
+                      {o.shipping_address.country}
+                    </address>
                     {o.coupon_code && <p className="mt-2 text-xs text-emerald-700">Coupon: {o.coupon_code}</p>}
                   </div>
                 </div>

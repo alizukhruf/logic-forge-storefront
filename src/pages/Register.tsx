@@ -5,8 +5,10 @@ import { useAuth } from '../context/AuthContext';
 export const Register: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export const Register: React.FC = () => {
     setMessage(null);
     setSubmitting(true);
     try {
-      const signedIn = await register(name, email, password);
+      const signedIn = await register(firstName, lastName, email, phone, password);
       if (signedIn) navigate('/');
       else setMessage('Check your email to confirm your account, then sign in.');
     } catch (err: any) {
@@ -42,13 +44,26 @@ export const Register: React.FC = () => {
         <h1 className="font-display text-2xl font-extrabold text-brand-950">Create your account</h1>
         <p className="mt-2 text-sm text-gray-500">Join Logic Forge to save products and view orders.</p>
         <form onSubmit={submit} className="mt-6 space-y-4">
-          <label className="block text-sm font-semibold text-gray-700">Full name
-            <input required autoComplete="name" placeholder="Your name" value={name}
-              onChange={(e) => setName(e.target.value)} className="lf-input mt-1.5" />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-semibold text-gray-700">First name
+              <input required autoComplete="given-name" maxLength={80} placeholder="First name" value={firstName}
+                onChange={(e) => setFirstName(e.target.value)} className="lf-input mt-1.5" />
+            </label>
+            <label className="block text-sm font-semibold text-gray-700">Last name
+              <input required autoComplete="family-name" maxLength={80} placeholder="Last name" value={lastName}
+                onChange={(e) => setLastName(e.target.value)} className="lf-input mt-1.5" />
+            </label>
+          </div>
           <label className="block text-sm font-semibold text-gray-700">Email
             <input required type="email" autoComplete="email" placeholder="you@example.com" value={email}
               onChange={(e) => setEmail(e.target.value)} className="lf-input mt-1.5" />
+          </label>
+          <label className="block text-sm font-semibold text-gray-700">Mobile number
+            <input required type="tel" autoComplete="tel" inputMode="tel" maxLength={24}
+              pattern="(?:[+]92|0092|0)?[ -]?3(?:[ -]?[0-9]){9}" title="Enter a Pakistani mobile number, such as 03001234567 or +92 300 1234567."
+              placeholder="03XX XXXXXXX" value={phone}
+              onChange={(e) => setPhone(e.target.value)} className="lf-input mt-1.5" />
+            <span className="mt-1 block text-xs font-normal text-gray-500">Pakistan mobile number (for example, 03001234567).</span>
           </label>
           <label className="block text-sm font-semibold text-gray-700">Password
             <span className="relative mt-1.5 block">

@@ -7,16 +7,18 @@ A React + TypeScript storefront with Supabase Auth and a PostgreSQL database. Th
 - Store browsing, category filters, search, sorting, and product reviews
 - Persistent cart, coupon validation, and transactional checkout with stock checks
 - Supabase email/password registration and login
+- Editable customer name, email (with confirmation), and Pakistani mobile number in account settings; Pakistan-formatted shipping details at checkout
 - Password changes for signed-in customers and admins
 - Customer order history and per-customer wishlist
-- Admin dashboard, product/category/inventory management, order status changes, coupon management, all-user account management, and review moderation
+- Admin dashboard, product/category/inventory management, order status changes, coupon management, all-user account management, review moderation, and editable storefront/contact settings
+- Password-verified sales/order reset that restores quantities sold to inventory
 - PKR price display throughout the storefront and admin screens
 - Row Level Security policies for public catalog data, private customer data, and admin operations
 
 ## Supabase setup
 
 1. In the Supabase dashboard for your project, open **SQL Editor**.
-2. Run the complete [`supabase/schema.sql`](./supabase/schema.sql) script. It creates the tables, indexes, triggers, Row Level Security policies, checkout and inventory functions, and initial catalog/coupons. For an existing project, run the focused [`supabase/account-deletion-migration.sql`](./supabase/account-deletion-migration.sql) to apply the order-history-preserving account-deletion relationship without re-running the full schema.
+2. Run the complete [`supabase/schema.sql`](./supabase/schema.sql) script. It creates the tables, indexes, triggers, Row Level Security policies, checkout and inventory functions, and initial catalog/coupons. For an existing project, run [`supabase/account-deletion-migration.sql`](./supabase/account-deletion-migration.sql) if it has not already been applied, followed by [`supabase/customer-contact-store-settings-migration.sql`](./supabase/customer-contact-store-settings-migration.sql) to add customer phone numbers, editable store settings, Pakistan checkout addresses, and the protected sales reset.
 3. In **Project Settings → API**, copy the project URL and the publishable key.
 4. Copy `.env.example` to `.env.local` and set:
 
@@ -70,6 +72,7 @@ Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel's project 
 - Supabase Auth handles password storage and sessions; passwords are never stored in the application tables.
 - RLS prevents customers from reading other customers' profiles, orders, or wishlists.
 - Checkout runs in a PostgreSQL function that checks current prices, coupon eligibility, and stock while locking products, then inserts the order and decrements inventory atomically.
+- The admin sales reset requires a fresh password check in the app and an admin-only database function; it deletes orders with an explicit primary-key filter and restores their sold quantities to inventory.
 - Admin access is based on the `profiles.role` value and should only be granted by a trusted project administrator.
 - Account deletion uses a server-side Edge Function that verifies the caller's current Auth session and admin profile before using the service-role key. Admins cannot delete their own account.
 - The publishable key is public by design. Database access is controlled by RLS; do not add a service-role key to client environment variables.

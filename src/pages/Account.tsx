@@ -16,8 +16,14 @@ const statusColor: Record<string, string> = {
 };
 
 export const Account: React.FC = () => {
-  const { user, changePassword } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const { db, ready } = useDatabase();
+  const [profileName, setProfileName] = useState(user?.name ?? '');
+  const [profileEmail, setProfileEmail] = useState(user?.email ?? '');
+  const [profilePhone, setProfilePhone] = useState(user?.phone ?? '');
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +34,23 @@ export const Account: React.FC = () => {
   if (!ready || !db) return <Loader />;
 
   const orders = listOrders(db, user.id);
+
+  const submitProfile = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+    setSavingProfile(true);
+    try {
+      const emailChangeRequested = await updateProfile(profileName, profilePhone, profileEmail);
+      setProfileSuccess(emailChangeRequested
+        ? 'Your profile was updated. Check your email inbox to confirm the new email address.'
+        : 'Your profile was updated.');
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Could not update your profile.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const submitPasswordChange = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -62,9 +85,41 @@ export const Account: React.FC = () => {
         <div className="min-w-0">
           <h2 className="font-display text-lg font-bold text-brand-950">{user.name}</h2>
           <p className="break-all text-sm text-gray-500">{user.email}</p>
+          <p className="mt-1 text-sm text-gray-500"><span className="font-medium text-gray-700">Mobile:</span> {user.phone || 'Not provided'}</p>
         </div>
         <Link to="/wishlist" className="lf-button-secondary ml-auto">View wishlist</Link>
       </motion.div>
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 }} aria-labelledby="profile-heading" className="lf-panel mt-5 p-5 sm:p-6">
+        <div className="mb-5">
+          <span className="lf-eyebrow">Personal details</span>
+          <h2 id="profile-heading" className="font-display text-xl font-bold text-brand-950">Update your profile</h2>
+          <p className="mt-1 text-sm text-gray-500">Keep your name and mobile number up to date. Email changes require confirmation.</p>
+        </div>
+        <form onSubmit={(event) => { void submitProfile(event); }} className="grid gap-4 sm:grid-cols-2">
+          <label className="text-sm font-semibold text-gray-700">Full name
+            <input required maxLength={160} autoComplete="name" value={profileName}
+              onChange={(event) => setProfileName(event.target.value)} className="lf-input mt-1.5" />
+          </label>
+          <label className="text-sm font-semibold text-gray-700">Mobile number
+            <input required type="tel" inputMode="tel" autoComplete="tel" maxLength={24}
+              pattern="(?:[+]92|0092|0)?[ -]?3(?:[ -]?[0-9]){9}"
+              title="Enter a Pakistani mobile number, such as 03001234567 or +92 300 1234567."
+              placeholder="03XX XXXXXXX" value={profilePhone}
+              onChange={(event) => setProfilePhone(event.target.value)} className="lf-input mt-1.5" />
+          </label>
+          <label className="text-sm font-semibold text-gray-700 sm:col-span-2">Email address
+            <input required type="email" autoComplete="email" maxLength={254} value={profileEmail}
+              onChange={(event) => setProfileEmail(event.target.value)} className="lf-input mt-1.5" />
+          </label>
+          <div className="flex flex-col items-start gap-3 sm:col-span-2">
+            {profileError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{profileError}</p>}
+            {profileSuccess && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{profileSuccess}</p>}
+            <button type="submit" disabled={savingProfile} className="lf-button-primary">
+              {savingProfile ? 'Saving profile…' : 'Save profile'}
+            </button>
+          </div>
+        </form>
+      </motion.section>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }} aria-labelledby="password-heading" className="lf-panel mt-5 p-5 sm:p-6">
         <div className="mb-5">
           <span className="lf-eyebrow">Account security</span>
